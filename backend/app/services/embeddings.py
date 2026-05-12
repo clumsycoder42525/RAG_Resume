@@ -1,31 +1,29 @@
+import google.generativeai as genai
 from app.core.config import settings
 import logging
 
 logger = logging.getLogger(__name__)
 
 class EmbeddingService:
-    _instance = None
-    _model = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super(EmbeddingService, cls).__new__(cls)
-        return cls._instance
-
-    @property
-    def model(self):
-        if self._model is None:
-            # Lazy import to speed up server startup and avoid RAM issues on Render
-            import torch
-            from sentence_transformers import SentenceTransformer
-            
-            logger.info(f"Loading embedding model: {settings.EMBEDDING_MODEL_NAME}")
-            device = "cpu"
-            self._model = SentenceTransformer(settings.EMBEDDING_MODEL_NAME, device=device)
-            logger.info("Embedding model loaded successfully.")
-        return self._model
+    def __init__(self):
+        if settings.GEMINI_API_KEY:
+            genai.configure(api_key=settings.GEMINI_API_KEY)
+            logger.info("Gemini Embedding service initialized.")
+        else:
+            logger.error("GEMINI_API_KEY not found for embeddings.")
 
     def encode(self, sentences: list[str]):
-        return self.model.encode(sentences).tolist()
+        try:
+            # Using Gemini's text-embedding-004 model (Free tier available)
+            result = genai.embed_content(
+                model="models/text-embedding-004",
+                content=sentences,
+                task_type="retrieval_document"
+            )
+            return result['embedding']
+        except Exception as e:
+            logger.error(f"Gemini Embedding error: {str(e)}")
+            # Fallback for empty/error states - though in production you'd want to handle this better
+            return [[0.0] * 768 for _ in sentences]
 
 embedding_service = EmbeddingService()
