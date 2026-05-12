@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+sentence-transformers
+chromadb
+PyPDF2
+beautifulsoup4
+httpx
+python-multipart
+pydantic-settings
+python-dotenv
+groq
+google-generativeai
+slowapi

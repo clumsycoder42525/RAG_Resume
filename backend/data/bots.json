@@ -1,0 +1,18 @@
+[
+    {
+        "name": "Verification Bot",
+        "description": "Testing the update functionality",
+        "theme": "cyberpunk",
+        "primary_color": "#10b981",
+        "avatar_url": null,
+        "id": "52be1611-f9f5-49ce-951f-d2918904e7be"
+    },
+    {
+        "name": "X",
+        "description": null,
+        "theme": "modern",
+        "primary_color": "#3b82f6",
+        "avatar_url": null,
+        "id": "24946b51-104b-4c68-8278-ee568c2d2a2c"
+    }
+]
