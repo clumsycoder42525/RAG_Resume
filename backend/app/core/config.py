@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from typing import Optional, Union
+from typing import Optional, Union, Any
 from pydantic import field_validator
 
 class Settings(BaseSettings):
@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     CHUNK_OVERLAP: int = 50
     
     # Security
-    ALLOWED_ORIGINS: list[str] = [
+    ALLOWED_ORIGINS: Any = [
         "http://localhost:3000", 
         "http://127.0.0.1:3000",
         "https://rag-resume-liard.vercel.app"
@@ -27,12 +27,18 @@ class Settings(BaseSettings):
 
     @field_validator("ALLOWED_ORIGINS", mode="before")
     @classmethod
-    def assemble_cors_origins(cls, v: Union[str, list[str]]) -> list[str]:
+    def assemble_cors_origins(cls, v: Any) -> list[str]:
         if isinstance(v, str) and not v.startswith("["):
             return [i.strip() for i in v.split(",")]
-        elif isinstance(v, (list, str)):
+        elif isinstance(v, list):
             return v
-        raise ValueError(v)
+        elif isinstance(v, str):
+            import json
+            try:
+                return json.loads(v)
+            except:
+                return [v]
+        return v
 
     class Config:
         env_file = ".env"
