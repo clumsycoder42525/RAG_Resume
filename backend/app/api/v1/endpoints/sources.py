@@ -13,8 +13,13 @@ async def upload_pdf(bot_id: str = Form(...), file: UploadFile = File(...)):
     
     try:
         content = await file.read()
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"Processing PDF: {file.filename}, size: {len(content)} bytes")
+        
         text = content_processor.extract_text_from_pdf(content)
         chunks = content_processor.chunk_text(text)
+        logger.info(f"Extracted {len(text)} characters, created {len(chunks)} chunks.")
         
         # Add to vector store (collection per bot)
         vector_store_service.add_documents(
@@ -22,6 +27,7 @@ async def upload_pdf(bot_id: str = Form(...), file: UploadFile = File(...)):
             texts=chunks,
             metadatas=[{"source": file.filename} for _ in chunks]
         )
+        logger.info("Successfully added documents to vector store.")
         
         num_chunks = len(chunks)
         

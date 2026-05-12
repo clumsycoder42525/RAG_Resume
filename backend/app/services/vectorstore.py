@@ -19,16 +19,23 @@ class VectorStoreService:
 
     def add_documents(self, collection_name: str, texts: list[str], metadatas: list[dict] = None):
         collection = self.get_collection(collection_name)
-        embeddings = embedding_service.encode(texts)
-        ids = [str(uuid.uuid4()) for _ in texts]
+        metadatas = metadatas or [{} for _ in texts]
         
-        # Batching could be added here if texts are huge, but for 512MB, smaller batches are better
-        collection.add(
-            documents=texts,
-            embeddings=embeddings,
-            metadatas=metadatas or [{} for _ in texts],
-            ids=ids
-        )
+        # Batching to handle Gemini/Chroma limits and save RAM
+        batch_size = 20 
+        for i in range(0, len(texts), batch_size):
+            batch_texts = texts[i:i + batch_size]
+            batch_metadatas = metadatas[i:i + batch_size]
+            
+            embeddings = embedding_service.encode(batch_texts)
+            ids = [str(uuid.uuid4()) for _ in batch_texts]
+            
+            collection.add(
+                documents=batch_texts,
+                embeddings=embeddings,
+                metadatas=batch_metadatas,
+                ids=ids
+            )
 
     def query(self, collection_name: str, query_text: str, n_results: int = 5):
         collection = self.get_collection(collection_name)
