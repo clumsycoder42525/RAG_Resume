@@ -22,7 +22,8 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: Any = [
         "http://localhost:3000", 
         "http://127.0.0.1:3000",
-        "https://rag-resume-liard.vercel.app"
+        "https://rag-resume-liard.vercel.app",
+        "https://rag-resume-git-main-parvgaur15sept-8542s-projects.vercel.app"
     ]
 
     @field_validator("ALLOWED_ORIGINS", mode="before")
