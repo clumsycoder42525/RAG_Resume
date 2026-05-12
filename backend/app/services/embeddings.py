@@ -12,18 +12,19 @@ class EmbeddingService:
         else:
             logger.error("GEMINI_API_KEY not found for embeddings.")
 
-    def encode(self, sentences: list[str]):
+    def encode(self, sentences: list[str], task_type: str = "retrieval_document"):
         try:
-            # Using Gemini's text-embedding-004 model (Free tier available)
+            # Using Gemini's text-embedding-004 model
             result = genai.embed_content(
                 model="models/text-embedding-004",
                 content=sentences,
-                task_type="retrieval_document"
+                task_type=task_type
             )
             return result['embedding']
         except Exception as e:
             logger.error(f"Gemini Embedding error: {str(e)}")
-            # Fallback for empty/error states - though in production you'd want to handle this better
-            return [[0.0] * 768 for _ in sentences]
+            # Fallback for empty/error states
+            dim = 768 # text-embedding-004 dimension
+            return [[0.0] * dim for _ in sentences]
 
 embedding_service = EmbeddingService()

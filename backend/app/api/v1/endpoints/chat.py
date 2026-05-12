@@ -27,19 +27,23 @@ async def chat(request: ChatRequest):
                 n_results=3
             )
             
-            if results and 'documents' in results and results['documents']:
+            if results and 'documents' in results and results['documents'] and results['documents'][0]:
                 context = "\n".join(results['documents'][0])
                 sources = results['metadatas'][0] if 'metadatas' in results and results['metadatas'] else []
+                logger.info(f"Retrieved {len(results['documents'][0])} chunks for context.")
+            else:
+                logger.warning("No relevant documents found in vector store.")
         except Exception as e:
-            logger.warning(f"Vector search failed: {str(e)}")
+            logger.error(f"Vector search failed: {str(e)}")
             # Continue without context if search fails
         
         # 2. Prepare LLM Prompt
-        system_prompt = f"""You are a helpful AI assistant. Use the following pieces of context to answer the user's question. 
-        If you don't know the answer, just say that you don't know, don't try to make up an answer.
+        system_prompt = f"""You are a helpful AI Knowledge Assistant. 
+        Use the provided CONTEXT to answer the user's question accurately.
+        If the CONTEXT doesn't contain the answer, use your general knowledge but mention that the specific information was not found in the uploaded documents.
         
         CONTEXT:
-        {context if context else "No context found for this query."}
+        {context if context else "No specific documents found for this query."}
         """
         
         messages = [{"role": "system", "content": system_prompt}]

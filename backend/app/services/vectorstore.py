@@ -32,7 +32,7 @@ class VectorStoreService:
 
     def query(self, collection_name: str, query_text: str, n_results: int = 5):
         collection = self.get_collection(collection_name)
-        query_embedding = embedding_service.encode([query_text])[0]
+        query_embedding = embedding_service.encode([query_text], task_type="retrieval_query")[0]
         
         results = collection.query(
             query_embeddings=[query_embedding],
