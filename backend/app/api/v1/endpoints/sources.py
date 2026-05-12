@@ -38,7 +38,10 @@ async def upload_pdf(bot_id: str = Form(...), file: UploadFile = File(...)):
         
         return {"message": f"Successfully processed {file.filename}", "chunks": num_chunks}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        error_details = traceback.format_exc()
+        logger.error(f"PDF Upload Error: {str(e)}\n{error_details}")
+        raise HTTPException(status_code=500, detail=f"PDF Error: {str(e)}")
 
 @router.post("/ingest-url")
 async def ingest_url(bot_id: str = Form(...), url: str = Form(...)):
