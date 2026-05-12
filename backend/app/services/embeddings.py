@@ -1,5 +1,3 @@
-import torch
-from sentence_transformers import SentenceTransformer
 from app.core.config import settings
 import logging
 
@@ -17,8 +15,11 @@ class EmbeddingService:
     @property
     def model(self):
         if self._model is None:
+            # Lazy import to speed up server startup and avoid RAM issues on Render
+            import torch
+            from sentence_transformers import SentenceTransformer
+            
             logger.info(f"Loading embedding model: {settings.EMBEDDING_MODEL_NAME}")
-            # Ensure CPU usage for low RAM environments
             device = "cpu"
             self._model = SentenceTransformer(settings.EMBEDDING_MODEL_NAME, device=device)
             logger.info("Embedding model loaded successfully.")
