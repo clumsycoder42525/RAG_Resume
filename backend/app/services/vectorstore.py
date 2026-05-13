@@ -12,10 +12,26 @@ class VectorStoreService:
         )
 
     def get_collection(self, collection_name: str):
-        return self.client.get_or_create_collection(
-            name=collection_name,
-            metadata={"hnsw:space": "cosine"}
-        )
+        try:
+            return self.client.get_or_create_collection(
+                name=collection_name,
+                metadata={"hnsw:space": "cosine"}
+            )
+        except Exception as e:
+            if "dimension" in str(e).lower() or "invalidargumenterror" in str(e).lower():
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Dimension mismatch detected for {collection_name}. Recreating collection...")
+                try:
+                    self.client.delete_collection(name=collection_name)
+                    return self.client.get_or_create_collection(
+                        name=collection_name,
+                        metadata={"hnsw:space": "cosine"}
+                    )
+                except Exception as ex:
+                    logger.error(f"Failed to recreate collection: {str(ex)}")
+                    raise e
+            raise e
 
     def add_documents(self, collection_name: str, texts: list[str], metadatas: list[dict] = None):
         collection = self.get_collection(collection_name)
