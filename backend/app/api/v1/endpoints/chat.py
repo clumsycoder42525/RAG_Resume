@@ -46,9 +46,17 @@ async def chat(request: ChatRequest):
         {context if context else "No specific documents found for this query."}
         """
         
+        # Sanitize history to only include 'role' and 'content' (fixes Groq 400 error)
+        sanitized_history = []
+        for msg in request.history[-5:]:
+            if "role" in msg and "content" in msg:
+                sanitized_history.append({
+                    "role": msg["role"],
+                    "content": msg["content"]
+                })
+        
         messages = [{"role": "system", "content": system_prompt}]
-        # Add history (limited to save memory)
-        messages.extend(request.history[-5:]) 
+        messages.extend(sanitized_history)
         messages.append({"role": "user", "content": request.message})
         
         # 3. Get LLM response
