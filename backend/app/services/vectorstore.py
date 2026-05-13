@@ -46,22 +46,49 @@ class VectorStoreService:
             embeddings = embedding_service.encode(batch_texts)
             ids = [str(uuid.uuid4()) for _ in batch_texts]
             
-            collection.add(
-                documents=batch_texts,
-                embeddings=embeddings,
-                metadatas=batch_metadatas,
-                ids=ids
-            )
+            try:
+                collection.add(
+                    documents=batch_texts,
+                    embeddings=embeddings,
+                    metadatas=batch_metadatas,
+                    ids=ids
+                )
+            except Exception as e:
+                if "dimension" in str(e).lower() or "invalidargumenterror" in str(e).lower():
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"Dimension mismatch during add for {collection_name}. Resetting...")
+                    self.client.delete_collection(name=collection_name)
+                    # Re-get and retry once
+                    new_collection = self.get_collection(collection_name)
+                    new_collection.add(
+                        documents=batch_texts,
+                        embeddings=embeddings,
+                        metadatas=batch_metadatas,
+                        ids=ids
+                    )
+                else:
+                    raise e
 
     def query(self, collection_name: str, query_text: str, n_results: int = 5):
         collection = self.get_collection(collection_name)
         query_embedding = embedding_service.encode([query_text], task_type="retrieval_query")[0]
         
-        results = collection.query(
-            query_embeddings=[query_embedding],
-            n_results=n_results
-        )
-        return results
+        try:
+            results = collection.query(
+                query_embeddings=[query_embedding],
+                n_results=n_results
+            )
+            return results
+        except Exception as e:
+            if "dimension" in str(e).lower() or "invalidargumenterror" in str(e).lower():
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Dimension mismatch during query for {collection_name}. Resetting...")
+                self.client.delete_collection(name=collection_name)
+                # Return empty results as the collection is now empty
+                return {"documents": [[]], "metadatas": [[]], "distances": [[]]}
+            raise e
 
     def list_sources(self, collection_name: str):
         collection = self.get_collection(collection_name)
